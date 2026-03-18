@@ -15,7 +15,7 @@ export const registro = async (req, res) => {
             return res.status(400).json({ error: 'El gmail ya esta registrado' });
         }
 
-        // Hashear la contraseña
+        // Hasheo de la contraseña
         const contraseniaHasheada = await bcrypt.hash(contrasenia, 10);
         
         // Crear el usuario en BD con el hasheo
@@ -57,4 +57,40 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     res.json({ mensaje: 'Sesión cerada' });
+};
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { gmail } = req.body;
+
+        if (!gmail) {
+            return res.status(400).json({ error: 'El gmail es obligatorio' });
+        }
+
+        // Respuesta genérica para no filtrar si el usuario existe o no.
+        const usuario = await Usuario.obtenerUsuarioPorGmail(gmail);
+
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ error: 'Falta configurar JWT_SECRET' });
+        }
+
+        if (usuario) {
+            const resetToken = jwt.sign(
+                { id: usuario.id_usuario, gmail: usuario.gmail, purpose: 'password_reset' },
+                process.env.JWT_SECRET,
+                { expiresIn: '15m' }
+            );
+
+            return res.json({
+                mensaje: 'Si el gmail existe, se enviarán instrucciones para restablecer la contraseña',
+                resetToken,
+            });
+        }
+
+        return res.json({
+            mensaje: 'Si el gmail existe, se enviarán instrucciones para restablecer la contraseña',
+        });
+    } catch (error) {
+        return res.status(500).json({ error: 'Error al iniciar el restablecimiento de contraseña' });
+    }
 };
