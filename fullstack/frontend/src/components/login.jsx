@@ -1,72 +1,86 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function Login() {
-    const [formData, setFormData] = useState({
-        gmail: '',
-        contrasenia: ''
+  const navigate = useNavigate(); 
+  
+  const [formData, setFormData] = useState({
+    gmail: '',
+    contrasenia: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
     });
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+  };
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+    try {
+      const response = await axios.post('http://localhost:3000/api/auth/login', formData);
+      localStorage.setItem('token', response.data.token);
+      navigate('/dashboard'); 
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        try {
-            const response = await axios.post('http://localhost:3000/api/auth/login', formData);
+  return (
+    <div className="login-container">
+      <h2>Iniciar sesión</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          name="gmail"
+          placeholder="Correo electrónico"
+          value={formData.gmail}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="contrasenia"
+          placeholder="Contraseña"
+          value={formData.contrasenia}
+          onChange={handleChange}
+          required
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Cargando...' : 'Iniciar sesión'}
+        </button>
+      </form>
 
-            // Guardar token
-            localStorage.setItem('token', response.data.token);
-            
-            // Redirigir al dashboard
-            const navigate = useNavigate();
+      <div className="login-links">
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => navigate('/forgot-password')}
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
 
-            navigate('/dashboard');
+        <button
+          type="button"
+          className="outline-button"
+          onClick={() => navigate('/registro')}
+        >
+          Crear cuenta nueva
+        </button>
+      </div>
 
-        } catch (err) {
-            setError(err.response?.data?.error || 'Error al iniciar sesión');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className='login-container'>
-            <h2>Iniciar sesión</h2>
-            <form onSubmit={handleSubmit}>
-                <input
-                    type='email'
-                    name='gmail'
-                    placeholder='Email'
-                    value={formData.gmail}
-                    onChange={handleChange}
-                    required
-                />
-                <input
-                    type='password'
-                    name='contrasenia'
-                    placeholder='Contraseña'
-                    value={formData.contrasenia}
-                    onChange={handleChange}
-                    required
-                />
-                <button type='submit' disabled={loading}>
-                    {loading ? 'Cargando...' : 'Iniciar Sesión'}
-                </button>
-            </form>
-            {error && <p className='error'>{error}</p>}
-        </div>
-    );
+      {error && <p className="error">{error}</p>}
+    </div>
+  );
 }
 
 export default Login;
