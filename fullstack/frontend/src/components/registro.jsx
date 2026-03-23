@@ -34,7 +34,7 @@ function Registro() {
         }
 
         try {
-            await axios.post('http://localhost:3000/api/auth/registro', {
+            await axios.post('BACKEND_URL', {
                 gmail: formData.gmail, // ✅ CORREGIDO
                 nombre: formData.nombre,
                 contrasenia: formData.contrasenia    
