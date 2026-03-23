@@ -34,13 +34,13 @@ function Registro() {
         }
 
         try {
-            await axios.post('BACKEND_URL', {
+            await axios.post(`${process.env.BACKEND_URL}/api/auth/registro`, {
                 gmail: formData.gmail, // ✅ CORREGIDO
                 nombre: formData.nombre,
                 contrasenia: formData.contrasenia    
             });
 
-            navigate('/verificar-email', { state: { gmail: formData.gmail } });
+            navigate('/verificarMail');
 
         } catch (err) {
             setError(err.response?.data?.error || 'Error al registrar');

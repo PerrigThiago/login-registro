@@ -14,7 +14,7 @@ function ForgotPassword() {
     setMsg('');
 
     try {
-      await axios.post('http://localhost:3000/api/auth/forgot-password', { gmail: email });
+      await axios.post(`${process.env.BACKEND_URL}/api/auth/forgot-password`, { gmail: email });
       setMsg('Te enviamos un email con instrucciones. Revisa tu bandeja.');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al enviar el email');

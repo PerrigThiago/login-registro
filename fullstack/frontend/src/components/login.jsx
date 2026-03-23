@@ -25,7 +25,7 @@ function Login() {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', formData);
+      const response = await axios.post(`${process.env.BACKEND_URL}/api/auth/login`, formData);
       localStorage.setItem('token', response.data.token);
       navigate('/dashboard'); 
     } catch (err) {
