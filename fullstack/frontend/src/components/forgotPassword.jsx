@@ -14,7 +14,10 @@ function ForgotPassword() {
     setMsg('');
 
     try {
-      await axios.post(`${process.env.BACKEND_URL}/api/auth/forgot-password`, { gmail: email });
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,  // ✅
+        { gmail: email }
+      );
       setMsg('Te enviamos un email con instrucciones. Revisa tu bandeja.');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al enviar el email');
@@ -32,7 +35,6 @@ function ForgotPassword() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-
         <button type="submit">Enviar email</button>
       </form>
 

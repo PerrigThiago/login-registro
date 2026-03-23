@@ -40,7 +40,7 @@ function Registro() {
                 contrasenia: formData.contrasenia    
             });
 
-            navigate('/verificarMail');
+            navigate('/verificar-email', { state: { gmail: formData.gmail } });
 
         } catch (err) {
             setError(err.response?.data?.error || 'Error al registrar');
