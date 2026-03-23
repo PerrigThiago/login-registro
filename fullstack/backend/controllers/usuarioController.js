@@ -1,31 +1,73 @@
 import * as Usuario from '../models/usuario.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
+import nodemailer from 'nodemailer';
+
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USER,   // ✅ Desde .env
+        pass: process.env.EMAIL_PASS    // ✅ App Password de Gmail
+    }
+});
 
 export const registro = async (req, res) => {
     try {
         const { gmail, nombre, contrasenia } = req.body;
 
         if (!gmail || !nombre || !contrasenia) {
-            return res.status(400).json({ error : 'Todos los campos son obligatorios' });
+            return res.status(400).json({ error: 'Todos los campos son obligatorios' });
         }
 
         const usuarioExiste = await Usuario.obtenerUsuarioPorGmail(gmail);
         if (usuarioExiste) {
-            return res.status(400).json({ error: 'El gmail ya esta registrado' });
+            return res.status(400).json({ error: 'El gmail ya está registrado' });
         }
 
-        // Hasheo de la contraseña
-        const contraseniaHasheada = await bcrypt.hash(contrasenia, 10);
-        
-        // Crear el usuario en BD con el hasheo
-        const nuevoUsuario = await Usuario.crearUsuario(gmail, nombre, contraseniaHasheada);
+        const hash = await bcrypt.hash(contrasenia, 10);
+        const token = uuidv4();
 
+        await Usuario.crearUsuario(gmail, nombre, hash, token);
 
-        res.status(201).json({ mensaje: 'Usuario registrado correctamente' });
+        const link = `${process.env.BACKEND_URL}/api/auth/verificar?token=${token}`; // ✅ Desde .env
+
+        await transporter.sendMail({
+            from: `"Mi App" <${process.env.EMAIL_USER}>`,  // ✅ from obligatorio
+            to: gmail,
+            subject: "Verificá tu cuenta",
+            html: `
+                <h2>Hola ${nombre}</h2>
+                <p>Hacé click para activar tu cuenta:</p>
+                <a href="${link}">Verificar cuenta</a>
+            `
+        });
+
+        res.status(201).json({ mensaje: 'Usuario registrado. Revisá tu email.' });
 
     } catch (error) {
+        console.error('Error en registro:', error); // ✅ Para debuggear
         res.status(500).json({ error: 'Error al registrar usuario' });
+    }
+};
+
+export const verificarEmail = async (req, res) => {
+    try {
+        const { token } = req.query;
+
+        const usuario = await Usuario.obtenerUsuarioPorToken(token);
+
+        if (!usuario) {
+            return res.status(400).send("Token inválido");
+        }
+
+        await Usuario.verificarUsuario(token);
+
+        res.redirect(`${process.env.FRONTEND_URL}/verificado`); // ✅ Desde .env
+
+    } catch (error) {
+        console.error('Error en verificación:', error);
+        res.status(500).send("Error al verificar");
     }
 };
 
@@ -38,59 +80,29 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        // Verificar contraseña
-        const contraseniaValida = await bcrypt.compare(contrasenia, usuario.contrasenia);
+        if (!usuario.verificado) {
+            return res.status(403).json({ error: 'Debes verificar tu email primero' });
+        }
 
-        if (!contraseniaValida) {
+        const valida = await bcrypt.compare(contrasenia, usuario.contrasenia);
+        if (!valida) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
-        
-        // Si válida, generar JWT
-        const token = jwt.sign({ id: usuario.id_usuario, gmail: usuario.gmail }, process.env.JWT_SECRET);
+
+        const token = jwt.sign(
+            { id: usuario.id_usuario, gmail: usuario.gmail },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }  // ✅ Expiración agregada
+        );
 
         res.json({ token });
 
     } catch (error) {
+        console.error('Error en login:', error);
         res.status(500).json({ error: 'Error al iniciar sesión' });
     }
 };
 
 export const logout = async (req, res) => {
-    res.json({ mensaje: 'Sesión cerada' });
-};
-
-export const forgotPassword = async (req, res) => {
-    try {
-        const { gmail } = req.body;
-
-        if (!gmail) {
-            return res.status(400).json({ error: 'El gmail es obligatorio' });
-        }
-
-        // Respuesta genérica para no filtrar si el usuario existe o no.
-        const usuario = await Usuario.obtenerUsuarioPorGmail(gmail);
-
-        if (!process.env.JWT_SECRET) {
-            return res.status(500).json({ error: 'Falta configurar JWT_SECRET' });
-        }
-
-        if (usuario) {
-            const resetToken = jwt.sign(
-                { id: usuario.id_usuario, gmail: usuario.gmail, purpose: 'password_reset' },
-                process.env.JWT_SECRET,
-                { expiresIn: '15m' }
-            );
-
-            return res.json({
-                mensaje: 'Si el gmail existe, se enviarán instrucciones para restablecer la contraseña',
-                resetToken,
-            });
-        }
-
-        return res.json({
-            mensaje: 'Si el gmail existe, se enviarán instrucciones para restablecer la contraseña',
-        });
-    } catch (error) {
-        return res.status(500).json({ error: 'Error al iniciar el restablecimiento de contraseña' });
-    }
+    res.json({ mensaje: 'Sesión cerrada' }); // ✅ Typo corregido
 };

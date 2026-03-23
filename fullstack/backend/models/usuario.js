@@ -1,17 +1,26 @@
 import pool from '../config/bd.js';
 
-// No hay que poner el id_usuario porque es autoincremental, postgreSQL se encarga de asignarlo automáticamente.
-export const crearUsuario = async (gmail, nombre, contrasenia) => {
+// ✅ Crear usuario con token
+export const crearUsuario = async (gmail, nombre, contrasenia, token) => {
     const resultado = await pool.query(
-        `INSERT INTO usuario (gmail, nombre, contrasenia) 
-        VALUES ($1, $2, $3) 
-        RETURNING *`, 
-        [gmail, nombre, contrasenia]
+        `INSERT INTO usuario (gmail, nombre, contrasenia, text_verificacion, verificado) 
+         VALUES ($1, $2, $3, $4, false) 
+         RETURNING *`,
+        [gmail, nombre, contrasenia, token]
     );
     return resultado.rows[0];
 };
 
-// No pasar contraseña porque no es necesario para mostrar la información del usuario. Mejor por seguridad.
+// 🔍 Obtener por gmail
+export const obtenerUsuarioPorGmail = async (gmail) => {
+    const resultado = await pool.query(
+        `SELECT * FROM usuario WHERE gmail = $1`,
+        [gmail]
+    );
+    return resultado.rows[0];
+};
+
+// 🔍 Obtener por ID
 export const obtenerUsuarioPorId = async (id_usuario) => {
     const resultado = await pool.query(
         `SELECT id_usuario, gmail, nombre FROM usuario WHERE id_usuario = $1`,
@@ -20,10 +29,21 @@ export const obtenerUsuarioPorId = async (id_usuario) => {
     return resultado.rows[0];
 };
 
-export const obtenerUsuarioPorGmail = async (gmail) => {
+// 🔍 Obtener por token
+export const obtenerUsuarioPorToken = async (token) => {
     const resultado = await pool.query(
-        `SELECT * FROM usuario WHERE gmail = $1`,
-        [gmail]
+        `SELECT * FROM usuario WHERE text_verificacion = $1`,
+        [token]
     );
     return resultado.rows[0];
+};
+
+// ✅ Verificar usuario
+export const verificarUsuario = async (token) => {
+    await pool.query(
+        `UPDATE usuario 
+         SET verificado = true, text_verificacion = NULL 
+         WHERE text_verificacion = $1`,
+        [token]
+    );
 };

@@ -1,0 +1,90 @@
+.verificar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    max-width: 420px;
+    margin: 6rem auto;
+    padding: 3rem 2rem;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+}
+
+.verificar-icono {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    border: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+}
+
+.verificar-icono--exito {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #16a34a;
+}
+
+.verificar-container h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 500;
+}
+
+.verificar-descripcion {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.6;
+}
+
+.verificar-descripcion strong {
+    color: #111;
+    font-weight: 500;
+}
+
+.verificar-spam {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #999;
+}
+
+.verificar-reenviar {
+    padding: 0.65rem 1.25rem;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.verificar-reenviar span {
+    color: #111;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.verificar-reenviar span:hover {
+    text-decoration: underline;
+}
+
+.verificar-btn {
+    padding: 0.65rem 2rem;
+    background: #111;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.verificar-btn:hover {
+    background: #333;
+}
